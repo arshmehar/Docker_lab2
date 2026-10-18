@@ -1,0 +1,40 @@
+services:
+  # Service 1: Train the model
+  # Reuses the Dockerfile's base stage (dependencies already installed)
+  # Mounts data/ because training reads data/titanic.csv
+  # Trains, then copies the model AND scaler to the shared volume
+  model-training:
+    build:
+      context: .
+      target: base
+    container_name: ml_trainer
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - model_exchange:/exchange
+    command: >
+      sh -c "python src/model_training.py &&
+             cp my_model.keras scaler.pkl /exchange/"
+
+  # Service 2: Serve the model
+  # Flask runs on port 4000
+  # Waits for training to finish, copies the model and scaler from the shared volume, then runs the server
+  serving:
+    build:
+      context: .
+      target: base
+    container_name: ml_serving
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./src:/app/src
+      - model_exchange:/exchange
+    depends_on:
+      model-training:
+        condition: service_completed_successfully
+    command: >
+      sh -c "cp /exchange/my_model.keras /exchange/scaler.pkl . &&
+             python src/main.py"
+
+volumes:
+  model_exchange:
