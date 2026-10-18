@@ -25,14 +25,6 @@ TensorFlow model is trained to predict whether a Titanic passenger survived, the
 - Mounts `data/` into the training container, passes the model and the scaler through the shared `model_exchange` volume
 - **Fixed the port mapping:** `80:80` became `4000:4000`
 
-## Two approaches
-
-| | Dockerfile | Docker Compose |
-|---|---|---|
-| When the model is trained | At **build time**, baked into the image | At **run time**, in a separate container |
-| How the model reaches serving | `COPY --from=model_training` | Shared volume `model_exchange` |
-| Code changes | Need a rebuild | `src/` is mounted, so just restart |
-| Best for | Shipping or deploying one image | Local development, multi-container setups |
 
 ## How to run
 
